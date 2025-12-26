@@ -26,6 +26,19 @@ nucleo search "download" --expand
 nucleo copy "arrow-right" ./src/assets/icons
 nucleo copy "download" ./public/icons --output download-icon.svg
 
+# Copy specific style variant (important when icon exists in multiple styles!)
+nucleo copy "download" --group arcade ./icons    # get Arcade version
+nucleo copy "download" --group ui ./icons        # get UI version
+nucleo copy "download" --group "micro bold"      # get Micro Bold version
+
+# Copy by exact icon ID (from search --expand)
+nucleo copy --id 315 ./icons
+
+# Customize colors for theming / dark mode
+nucleo copy "download" --group arcade --color "#ffffff"       # white for dark mode
+nucleo copy "download" --group arcade --color currentColor    # CSS-controlled
+nucleo copy "download" --color "#3B82F6" --secondary "#93C5FD"  # custom duotone
+
 # Export as PNG (transparent background)
 nucleo copy "download" --png                  # 64x64 PNG
 nucleo copy "download" --png --size 128       # 128x128 PNG

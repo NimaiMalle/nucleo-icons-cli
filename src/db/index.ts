@@ -87,11 +87,30 @@ export class NucleoDatabase {
   }
 
   /**
+   * Check if a term matches anywhere in the icon's searchable fields
+   */
+  private termMatchesIcon(icon: Icon, term: string): boolean {
+    const name = icon.name.toLowerCase();
+    const tags = (icon.tags || '').toLowerCase();
+    const nucleoTags = (icon.nucleo_tags || '').toLowerCase();
+    const setTitle = (icon.set_title || '').toLowerCase();
+    const groupTitle = (icon.group_title || '').toLowerCase();
+
+    return name.includes(term) ||
+           tags.includes(term) ||
+           nucleoTags.includes(term) ||
+           setTitle.includes(term) ||
+           groupTitle.includes(term);
+  }
+
+  /**
    * Calculate relevance score for an icon based on query terms
    * Higher score = more relevant
+   * Scores are based on: (1) how many terms match, (2) quality of match
    */
   private calculateRelevance(icon: Icon, positiveTerms: string[]): number {
     let score = 0;
+    let matchCount = 0;
     const name = icon.name.toLowerCase();
     const tags = (icon.tags || '').toLowerCase();
     const nucleoTags = (icon.nucleo_tags || '').toLowerCase();
@@ -99,26 +118,39 @@ export class NucleoDatabase {
     const groupTitle = (icon.group_title || '').toLowerCase();
 
     for (const term of positiveTerms) {
+      let termScore = 0;
+
       // Exact name match (highest)
       if (name === term) {
-        score += 100;
+        termScore = 100;
       }
       // Name starts with term
       else if (name.startsWith(term + '-') || name.startsWith(term)) {
-        score += 50;
+        termScore = 50;
       }
       // Name contains term
       else if (name.includes(term)) {
-        score += 30;
+        termScore = 30;
       }
       // Tag match
       else if (tags.includes(term) || nucleoTags.includes(term)) {
-        score += 10;
+        termScore = 10;
       }
       // Set/group match (lowest - these are more like filters)
       else if (setTitle.includes(term) || groupTitle.includes(term)) {
-        score += 5;
+        termScore = 5;
       }
+
+      if (termScore > 0) {
+        matchCount++;
+        score += termScore;
+      }
+    }
+
+    // Multiply by match count to heavily favor icons matching more terms
+    // An icon matching 3 terms should rank much higher than one matching 1
+    if (positiveTerms.length > 1 && matchCount > 0) {
+      score *= matchCount;
     }
 
     return score;
@@ -126,6 +158,7 @@ export class NucleoDatabase {
 
   /**
    * Search icons by name, tags, set title, or group title
+   * Uses OR matching - icons matching ANY term are returned, ranked by match count
    * Supports negation with - prefix (e.g., "arrow -circle")
    * Returns results with relevance scoring
    */
@@ -153,7 +186,7 @@ export class NucleoDatabase {
     const params: any[] = [];
     const whereClauses: string[] = [];
 
-    // Build WHERE clause - each positive term must match somewhere
+    // Build WHERE clause - match ANY positive term (OR), ranked by match count later
     if (positive.length > 0) {
       const termClauses = positive.map(() => `(
         i.name LIKE ?
@@ -162,7 +195,8 @@ export class NucleoDatabase {
         OR s.title LIKE ?
         OR g.title LIKE ?
       )`);
-      whereClauses.push(termClauses.join(' AND '));
+      // Use OR between terms - any term matching is enough
+      whereClauses.push(`(${termClauses.join(' OR ')})`);
 
       for (const term of positive) {
         const likeTerm = `%${term}%`;
@@ -170,7 +204,7 @@ export class NucleoDatabase {
       }
     }
 
-    // Negative terms must NOT match anywhere
+    // Negative terms must NOT match anywhere (still AND for exclusions)
     for (const term of negative) {
       const likeTerm = `%${term}%`;
       whereClauses.push(`(
@@ -206,7 +240,7 @@ export class NucleoDatabase {
 
     // Get more results than limit to allow for relevance sorting
     sql += ` LIMIT ?`;
-    params.push(limit * 10);
+    params.push(limit * 20);
 
     const stmt = this.db.prepare(sql);
     const results = stmt.all(...params) as Icon[];
@@ -365,9 +399,50 @@ export class NucleoDatabase {
   }
 
   /**
-   * Get icon by exact name
+   * Get icon by exact name, optionally filtered by group or set
    */
-  getIconByName(name: string): Icon | undefined {
+  getIconByName(name: string, options: { groupId?: number; setId?: number } = {}): Icon | undefined {
+    const { groupId, setId } = options;
+
+    let sql = `
+      SELECT
+        i.id,
+        i.name,
+        i.tags,
+        i.nucleo_tags,
+        i.set_id,
+        i.favourite,
+        i.width,
+        i.height,
+        s.title as set_title,
+        g.title as group_title
+      FROM icons i
+      LEFT JOIN sets s ON i.set_id = s.id
+      LEFT JOIN groups g ON s.group_id = g.id
+      WHERE i.name = ?
+    `;
+    const params: any[] = [name];
+
+    if (groupId) {
+      sql += ` AND s.group_id = ?`;
+      params.push(groupId);
+    }
+
+    if (setId) {
+      sql += ` AND i.set_id = ?`;
+      params.push(setId);
+    }
+
+    sql += ` LIMIT 1`;
+
+    const stmt = this.db.prepare(sql);
+    return stmt.get(...params) as Icon | undefined;
+  }
+
+  /**
+   * Get icon by ID
+   */
+  getIconById(id: number): Icon | undefined {
     const stmt = this.db.prepare(`
       SELECT
         i.id,
@@ -378,13 +453,15 @@ export class NucleoDatabase {
         i.favourite,
         i.width,
         i.height,
-        s.title as set_title
+        s.title as set_title,
+        g.title as group_title
       FROM icons i
       LEFT JOIN sets s ON i.set_id = s.id
-      WHERE i.name = ?
+      LEFT JOIN groups g ON s.group_id = g.id
+      WHERE i.id = ?
       LIMIT 1
     `);
-    return stmt.get(name) as Icon | undefined;
+    return stmt.get(id) as Icon | undefined;
   }
 
   /**

@@ -111,6 +111,19 @@ nucleo copy visa
 nucleo copy mastercard ./src/assets/icons
 nucleo copy heart ./icons --output favorite.svg
 
+# Copy specific style variant
+nucleo copy download --group arcade           # get Arcade version
+nucleo copy download --group ui               # get UI version
+nucleo copy download --group "micro bold"     # get Micro Bold version
+
+# Copy by exact icon ID (from search --expand)
+nucleo copy --id 315 ./icons
+
+# Customize colors (great for theming / dark mode)
+nucleo copy download --group arcade --color "#ffffff"              # white for dark mode
+nucleo copy download --group arcade --color currentColor           # CSS-controlled
+nucleo copy download --group arcade --color "#3B82F6" --secondary "#93C5FD"  # blue duotone
+
 # Export as PNG (transparent background)
 nucleo copy download --png                    # 64x64 PNG (default)
 nucleo copy download --png --size 128         # 128x128 PNG
@@ -124,6 +137,10 @@ nucleo copy download --png --stdout > icon.png
 
 Options:
 - `-o, --output <filename>` - Custom output filename
+- `-g, --group <name>` - Filter by style group (UI, Core, Micro, Arcade, etc.)
+- `--id <number>` - Copy by exact icon ID (from `search --expand`)
+- `-c, --color <color>` - Replace primary color (e.g., `#ffffff`, `currentColor`)
+- `--secondary <color>` - Replace secondary color for duotone icons
 - `--stdout` - Output file content to stdout instead of writing to file
 - `--png` - Export as PNG instead of SVG (transparent background)
 - `--size <pixels>` - PNG size in pixels (default: 64)
