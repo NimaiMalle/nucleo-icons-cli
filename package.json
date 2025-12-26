@@ -24,11 +24,11 @@
     "fzf"
   ],
   "author": "",
-  "homepage": "https://github.com/yourusername/nucleo-icons-cli#readme",
+  "homepage": "https://github.com/NimaiMalle/nucleo-icons-cli#readme",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/nucleo-icons-cli"
+    "url": "https://github.com/NimaiMalle/nucleo-icons-cli"
   },
   "engines": {
     "node": ">=18.0.0"

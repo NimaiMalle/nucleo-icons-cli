@@ -22,7 +22,7 @@ A command-line interface for searching and using [Nucleo](https://nucleoapp.com/
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/nucleo-icons-cli.git
+git clone https://github.com/NimaiMalle/nucleo-icons-cli.git
 cd nucleo-icons-cli
 
 # Install dependencies
