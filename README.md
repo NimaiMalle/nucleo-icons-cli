@@ -4,7 +4,10 @@ A command-line interface for searching and using [Nucleo](https://nucleoapp.com/
 
 ## Features
 
-- **Search** 51,000+ icons by name or tags
+- **Smart search** - searches across names, tags, sets, and style families automatically
+- **Relevance ranking** - exact matches and name matches ranked higher than tag/set matches
+- **Negation** - exclude terms with `-` prefix (e.g., `arrow -circle`)
+- **Clustered results** - groups duplicate icons across styles for cleaner output
 - **Browse** 122 icon sets with an interactive TUI
 - **Filter** by style family (UI, Core, Micro Bold) or specialty collections (Arcade, Flags, etc.)
 - **Preview** icons directly in the terminal (iTerm2 inline images or ASCII/braille fallback)
@@ -39,18 +42,33 @@ npm link
 
 ### `nucleo search <query>`
 
-Search for icons by name or tags.
+Search for icons by name, tags, set, or style. Results are clustered by icon name and ranked by relevance.
 
 ```bash
+# Basic search
 nucleo search "arrow"
 nucleo search "credit card"
-nucleo search "user" --set "UI Essential"
-nucleo search "home" --limit 20
+
+# Smart cross-field search (finds "recycle" tag in "Nucleo Arcade" set)
+nucleo search "arcade recycle"
+
+# Exclude terms with - prefix
+nucleo search "arrow -circle"
+nucleo search "user -avatar -circle"
+
+# Show all style variants with full paths
+nucleo search "download" --expand
+
+# Filter by set or group
+nucleo search "home" --set "UI Essential"
+nucleo search "arrow" --group "Micro Bold"
 ```
 
 Options:
 - `-s, --set <name>` - Filter by icon set name
-- `-l, --limit <n>` - Maximum results (default: 50)
+- `-g, --group <name>` - Filter by style group (UI, Core, Micro) or specialty collection
+- `-l, --limit <n>` - Maximum results (default: 20)
+- `-e, --expand` - Show all style variants with IDs and paths
 
 ### `nucleo browse`
 
@@ -86,16 +104,29 @@ Options:
 
 ### `nucleo copy <name> [destination]`
 
-Copy an icon SVG to your project.
+Copy an icon SVG to your project, or export as PNG.
 
 ```bash
 nucleo copy visa
 nucleo copy mastercard ./src/assets/icons
 nucleo copy heart ./icons --output favorite.svg
+
+# Export as PNG (transparent background)
+nucleo copy download --png                    # 64x64 PNG (default)
+nucleo copy download --png --size 128         # 128x128 PNG
+nucleo copy download ./assets --png --size 32 # 32x32 PNG to ./assets/download.png
+
+# Output to stdout (for piping or inline use)
+nucleo copy download --stdout
+nucleo copy download --stdout | pbcopy        # copy SVG to clipboard (macOS)
+nucleo copy download --png --stdout > icon.png
 ```
 
 Options:
 - `-o, --output <filename>` - Custom output filename
+- `--stdout` - Output file content to stdout instead of writing to file
+- `--png` - Export as PNG instead of SVG (transparent background)
+- `--size <pixels>` - PNG size in pixels (default: 64)
 
 ### `nucleo sets`
 
@@ -154,11 +185,18 @@ Plus specialty collections: Arcade, Credit Cards, Flags, Social Media, and more.
 
 ## Use with AI Coding Assistants
 
-This CLI is designed to work well with AI coding assistants:
+This CLI is designed to work well with AI coding assistants. The smart search means agents don't need to understand Nucleo's taxonomy:
 
 ```bash
-# Agent searches for an icon
-nucleo search "download" --limit 5
+# Agent searches naturally - works across names, tags, sets, and styles
+nucleo search "arcade game controller"
+nucleo search "flags usa"
+nucleo search "download -arrow"
+
+# Agent sees clustered results showing available styles
+# download
+#   Styles: Nucleo UI, Nucleo Core, Nucleo Micro Bold
+#   Tags: arrow, bottom, save, receive, import, download
 
 # Agent copies it to the project
 nucleo copy "download" ./src/assets/icons
@@ -166,6 +204,8 @@ nucleo copy "download" ./src/assets/icons
 # Agent can preview to verify
 nucleo preview "download"
 ```
+
+See `AGENTS.sample.md` for a template to add to your project's agent instructions.
 
 ## How It Works
 
