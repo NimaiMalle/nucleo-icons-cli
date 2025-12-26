@@ -1,5 +1,5 @@
 {
-  "name": "nucleo-icons-cli",
+  "name": "@nimaimalle/nucleo-icons-cli",
   "version": "0.1.0",
   "description": "CLI tool for searching and using Nucleo icons",
   "main": "dist/index.js",
