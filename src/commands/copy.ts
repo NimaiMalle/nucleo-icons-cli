@@ -39,9 +39,10 @@ function replaceColors(svg: string, primaryColor?: string, secondaryColor?: stri
 
     for (const color of primaryColors) {
       // Replace stroke colors WITH opacity (secondary in Arcade duotone)
+      // Preserve the original opacity value
       result = result.replace(
         new RegExp(`stroke="${color}"([^>]*stroke-opacity="[^"]*")`, 'gi'),
-        `stroke="${secondaryColor}" stroke-opacity="1"`
+        `stroke="${secondaryColor}"$1`
       );
 
       // Replace fill colors WITH data-color="color-2" (secondary in UI icons)

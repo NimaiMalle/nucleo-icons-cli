@@ -200,6 +200,46 @@ Nucleo icons come in different style families optimized for different sizes:
 
 Plus specialty collections: Arcade, Credit Cards, Flags, Social Media, and more.
 
+## Color Customization & Theming
+
+Nucleo icons use hardcoded colors that can be replaced at copy time.
+
+### Duotone Icons (Arcade style)
+
+Arcade icons use a two-tone system based on opacity:
+- **Primary**: Full opacity strokes (the main icon shape)
+- **Secondary**: Reduced opacity strokes (`stroke-opacity=".25"`) for accents/shadows
+
+When using `--color` and `--secondary`, the original opacity values are preserved:
+
+```bash
+# For dark mode: both colors to currentColor, opacity preserved
+nucleo copy "download" --group arcade --color currentColor --secondary currentColor
+
+# Custom duotone theme
+nucleo copy "download" --group arcade --color "#3B82F6" --secondary "#93C5FD"
+```
+
+### CSS-Controlled Colors
+
+Using `currentColor` makes icons inherit their color from CSS:
+
+```bash
+nucleo copy "download" --color currentColor
+```
+
+Then in CSS:
+```css
+.icon { color: #212121; }
+.dark .icon { color: #ffffff; }
+```
+
+### Other Styles (UI, Core, Micro Bold)
+
+These typically use `fill` instead of `stroke`. The `--color` flag handles both:
+- Replaces `fill="#000"` or `fill="#212121"`
+- Replaces `stroke="#000"` or `stroke="#212121"`
+
 ## Use with AI Coding Assistants
 
 This CLI is designed to work well with AI coding assistants. The smart search means agents don't need to understand Nucleo's taxonomy:
